@@ -58,6 +58,7 @@
         .header-text p {
             font-size: 16px;
             opacity: 0.9;
+            margin-top: 5px;
         }
 
         .stats-container {
@@ -237,26 +238,27 @@
             <div class="logo">UP</div>
             <div class="header-text">
                 <h1>UNIVERSITAS PAPUA - FAKULTAS TEKNIK</h1>
-                <p>Profil Lulusan Mahasiswa - Program Studi Teknik Informatika S1 Reguler</p>
+                <p>Profil Lulusan Mahasiswa</p>
+                <p>Program Studi Teknik Informatika S1 Reguler</p>
                 <p>Yudisium Periode I Tahun Akademik 2025/2026</p>
             </div>
         </div>
 
         <div class="stats-container">
             <div class="stat-card">
-                <div class="stat-number" id="totalLulusan">18</div>
+                <div class="stat-number">18</div>
                 <div class="stat-label">Total Lulusan</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="ipkRata">3.19</div>
+                <div class="stat-number">3.19</div>
                 <div class="stat-label">IPK Rata-rata</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="sangatMemuaskan">16</div>
+                <div class="stat-number">16</div>
                 <div class="stat-label">Sangat Memuaskan</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="memuaskan">2</div>
+                <div class="stat-number">2</div>
                 <div class="stat-label">Memuaskan</div>
             </div>
         </div>
@@ -264,7 +266,7 @@
         <div class="filters">
             <div class="filter-group">
                 <label>Filter Predikat:</label>
-                <select id="filterPredikat">
+                <select id="filterPredikat" onchange="filterData()">
                     <option value="">Semua</option>
                     <option value="Sangat Memuaskan">Sangat Memuaskan</option>
                     <option value="Memuaskan">Memuaskan</option>
@@ -272,12 +274,12 @@
             </div>
             <div class="filter-group">
                 <label>Cari Nama:</label>
-                <input type="text" id="searchName" placeholder="Ketik nama mahasiswa...">
+                <input type="text" id="searchName" placeholder="Ketik nama mahasiswa..." oninput="filterData()">
             </div>
         </div>
 
         <div class="table-container">
-            <table id="mahasiswaTable">
+            <table>
                 <thead>
                     <tr>
                         <th>No</th>
@@ -288,14 +290,13 @@
                         <th>Predikat</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody">
-                </tbody>
+                <tbody id="tableBody"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        const mahasiswaData = [
+        const data = [
             { no: 1, nim: "202165011", nama: "MIZHAEL PARUBAK", ipk: 3.57, semester: 9, bulan: 51, predikat: "Sangat Memuaskan" },
             { no: 2, nim: "201865052", nama: "EMI ZUHAIMI", ipk: 3.48, semester: 15, bulan: 87, predikat: "Sangat Memuaskan" },
             { no: 3, nim: "202165035", nama: "JOSHUA ADRIEL BEMEY", ipk: 3.48, semester: 9, bulan: 51, predikat: "Sangat Memuaskan" },
@@ -322,55 +323,39 @@
             return 'ipk-low';
         }
 
-        function getPredikatBadge(predikat) {
-            if (predikat === "Sangat Memuaskan") {
-                return '<span class="badge badge-excellent">Sangat Memuaskan</span>';
-            }
-            return '<span class="badge badge-good">Memuaskan</span>';
+        function getBadge(predikat) {
+            return predikat === "Sangat Memuaskan" 
+                ? '<span class="badge badge-excellent">Sangat Memuaskan</span>'
+                : '<span class="badge badge-good">Memuaskan</span>';
         }
 
-        function renderTable(data) {
+        function renderTable(filteredData) {
             const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            
-            data.forEach((mhs) => {
-                const row = `
-                    <tr>
-                        <td>${mhs.no}</td>
-                        <td>${mhs.nim}</td>
-                        <td><strong>${mhs.nama}</strong></td>
-                        <td><span class="${getIPKClass(mhs.ipk)}">${mhs.ipk}</span></td>
-                        <td>${mhs.semester} Semester (${mhs.bulan} Bulan)</td>
-                        <td>${getPredikatBadge(mhs.predikat)}</td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
+            tbody.innerHTML = filteredData.map(m => `
+                <tr>
+                    <td>${m.no}</td>
+                    <td>${m.nim}</td>
+                    <td><strong>${m.nama}</strong></td>
+                    <td><span class="${getIPKClass(m.ipk)}">${m.ipk}</span></td>
+                    <td>${m.semester} Semester (${m.bulan} Bulan)</td>
+                    <td>${getBadge(m.predikat)}</td>
+                </tr>
+            `).join('');
         }
 
         function filterData() {
-            const predikatFilter = document.getElementById('filterPredikat').value;
-            const searchName = document.getElementById('searchName').value.toLowerCase();
+            const predikat = document.getElementById('filterPredikat').value;
+            const search = document.getElementById('searchName').value.toLowerCase();
             
-            let filtered = mahasiswaData;
-            
-            if (predikatFilter) {
-                filtered = filtered.filter(mhs => mhs.predikat === predikatFilter);
-            }
-            
-            if (searchName) {
-                filtered = filtered.filter(mhs => mhs.nama.toLowerCase().includes(searchName));
-            }
+            const filtered = data.filter(m => 
+                (!predikat || m.predikat === predikat) &&
+                (!search || m.nama.toLowerCase().includes(search))
+            );
             
             renderTable(filtered);
-            
-            document.getElementById('totalLulusan').textContent = filtered.length;
         }
 
-        document.getElementById('filterPredikat').addEventListener('change', filterData);
-        document.getElementById('searchName').addEventListener('input', filterData);
-
-        renderTable(mahasiswaData);
+        renderTable(data);
     </script>
 </body>
 </html>
